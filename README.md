@@ -1,4 +1,4 @@
-How to use this tool
+## How to use this tool
 
 ```sh
 
