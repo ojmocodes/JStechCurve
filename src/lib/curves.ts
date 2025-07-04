@@ -83,12 +83,38 @@ export function blendCurves(
   return blended;
 }
 
-// Apply time offset to a curve
-export function offsetCurve(curve: CurvePoint[], offset: number): CurvePoint[] {
-  return curve.map(point => ({
+// Apply time offset to a curve and interpolate values at original time points
+export function offsetCurve(curve: CurvePoint[], offset: number, originalTimes: number[]): CurvePoint[] {
+  // Create a map of offset curve for interpolation
+  const offsetCurveMap = curve.map(point => ({
     time: point.time + offset,
     value: point.value
   }));
+  
+  // Interpolate values at original time points
+  return originalTimes.map(time => {
+    // Find the closest points in the offset curve for interpolation
+    let beforePoint = offsetCurveMap[0];
+    let afterPoint = offsetCurveMap[offsetCurveMap.length - 1];
+    
+    for (let i = 0; i < offsetCurveMap.length - 1; i++) {
+      if (offsetCurveMap[i].time <= time && offsetCurveMap[i + 1].time >= time) {
+        beforePoint = offsetCurveMap[i];
+        afterPoint = offsetCurveMap[i + 1];
+        break;
+      }
+    }
+    
+    // Linear interpolation
+    if (beforePoint.time === afterPoint.time) {
+      return { time, value: beforePoint.value };
+    }
+    
+    const t = (time - beforePoint.time) / (afterPoint.time - beforePoint.time);
+    const value = beforePoint.value + t * (afterPoint.value - beforePoint.value);
+    
+    return { time, value: Math.max(0, Math.min(1, value)) };
+  });
 }
 
 // Generate combined curve with all transformations
@@ -104,10 +130,13 @@ export function generateCombinedCurve(
 } {
   // Generate base curves
   const hypeCurve = generateHypeCycle(timeRange, points);
-  let sCurve = generateSCurve(timeRange, points);
+  const originalSCurve = generateSCurve(timeRange, points);
   
-  // Apply time offset to S-curve
-  sCurve = offsetCurve(sCurve, timeOffset);
+  // Get original time points for consistent mapping
+  const originalTimes = hypeCurve.map(point => point.time);
+  
+  // Apply time offset to S-curve and interpolate at original time points
+  const sCurve = offsetCurve(originalSCurve, timeOffset, originalTimes);
   
   // Blend curves: 0 = all hype cycle (speculative), 1 = all S-curve (real adoption)
   const combinedCurve = blendCurves(hypeCurve, sCurve, blendRatio);
