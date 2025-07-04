@@ -3,6 +3,7 @@
 ```sh
 
 Run these on your command line:
+
 git clone https://github.com/ojmocodes/JStechCurve
 cd JStechCurve
 npm i
