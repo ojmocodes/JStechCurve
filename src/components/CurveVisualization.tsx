@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Legend } from 'recharts';
 import { Card } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
-import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { generateCombinedCurve } from '@/lib/curves';
 
 export default function CurveVisualization() {
@@ -15,8 +15,8 @@ export default function CurveVisualization() {
     const { hypeCurve, sCurve, combinedCurve } = generateCombinedCurve(
       timeOffset[0],
       blendRatio[0],
-      30, // Extended time range for wider view
-      300 // More points for smoother curves
+      40, // Extended time range for wider view (now -10 to 30)
+      400 // More points for smoother curves
     );
 
     // Combine all curves into chart data format
@@ -47,29 +47,32 @@ export default function CurveVisualization() {
         <Card className="p-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold text-foreground">Adoption Curves Visualization</h2>
-            <Button
-              variant={showCumulative ? "default" : "outline"}
-              onClick={() => setShowCumulative(!showCumulative)}
-              size="sm"
-            >
-              {showCumulative ? "Hide" : "Show"} Cumulative
-            </Button>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="cumulative"
+                checked={showCumulative}
+                onCheckedChange={(checked) => setShowCumulative(checked === true)}
+              />
+              <label htmlFor="cumulative" className="text-sm font-medium text-foreground cursor-pointer">
+                Cumulative
+              </label>
+            </div>
           </div>
           <div className="h-96 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={curveData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+              <LineChart data={curveData} margin={{ top: 20, right: 30, left: 20, bottom: 40 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--chart-grid))" />
                 <XAxis 
                   dataKey="time" 
                   stroke="hsl(var(--muted-foreground))"
-                  label={{ value: 'Time', position: 'insideBottom', offset: -10 }}
+                  label={{ value: 'Time', position: 'insideBottom', offset: -5 }}
                 />
                 <YAxis 
                   stroke="hsl(var(--muted-foreground))"
                   label={{ value: 'Perceived Value', angle: -90, position: 'insideLeft' }}
                   domain={[0, 1]}
                 />
-                <Legend />
+                <Legend wrapperStyle={{ paddingTop: '20px' }} />
                 <Line
                   type="monotone"
                   dataKey="hype"
