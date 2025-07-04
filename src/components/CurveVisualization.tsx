@@ -2,19 +2,21 @@ import { useState, useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Legend } from 'recharts';
 import { Card } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
+import { Button } from '@/components/ui/button';
 import { generateCombinedCurve } from '@/lib/curves';
 
 export default function CurveVisualization() {
   const [timeOffset, setTimeOffset] = useState([0]);
   const [blendRatio, setBlendRatio] = useState([0.5]);
+  const [showCumulative, setShowCumulative] = useState(true);
 
   // Generate curve data based on current slider values
   const curveData = useMemo(() => {
     const { hypeCurve, sCurve, combinedCurve } = generateCombinedCurve(
       timeOffset[0],
       blendRatio[0],
-      20,
-      200
+      30, // Extended time range for wider view
+      300 // More points for smoother curves
     );
 
     // Combine all curves into chart data format
@@ -22,7 +24,7 @@ export default function CurveVisualization() {
       time: point.time,
       hype: point.value,
       scurve: sCurve[index]?.value || 0,
-      combined: combinedCurve[index]?.value || 0,
+      cumulative: combinedCurve[index]?.value || 0,
     }));
 
     return chartData;
@@ -43,6 +45,16 @@ export default function CurveVisualization() {
 
         {/* Main Chart */}
         <Card className="p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold text-foreground">Adoption Curves Visualization</h2>
+            <Button
+              variant={showCumulative ? "default" : "outline"}
+              onClick={() => setShowCumulative(!showCumulative)}
+              size="sm"
+            >
+              {showCumulative ? "Hide" : "Show"} Cumulative
+            </Button>
+          </div>
           <div className="h-96 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={curveData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
@@ -74,14 +86,16 @@ export default function CurveVisualization() {
                   dot={false}
                   name="S-Curve (Real Adoption)"
                 />
-                <Line
-                  type="monotone"
-                  dataKey="combined"
-                  stroke="hsl(var(--chart-combined))"
-                  strokeWidth={3}
-                  dot={false}
-                  name="Combined Curve"
-                />
+                {showCumulative && (
+                  <Line
+                    type="monotone"
+                    dataKey="cumulative"
+                    stroke="hsl(var(--chart-combined))"
+                    strokeWidth={3}
+                    dot={false}
+                    name="Cumulative"
+                  />
+                )}
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -176,7 +190,7 @@ export default function CurveVisualization() {
           
           <Card className="p-6">
             <h4 className="text-lg font-semibold text-chart-combined mb-2">
-              Combined Model
+              Cumulative Model
             </h4>
             <p className="text-sm text-muted-foreground">
               Blends both curves to show how perceived value evolves when 
